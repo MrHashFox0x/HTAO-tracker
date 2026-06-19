@@ -4,7 +4,13 @@ import type { FlowStats } from "@/lib/useHL";
 import { usdSmart, pct, num } from "@/lib/format";
 import { Panel } from "./Panel";
 
-export function FlowPanel({ flow }: { flow: FlowStats }) {
+export function FlowPanel({
+  flow,
+  scope = "session",
+}: {
+  flow: FlowStats;
+  scope?: "all-time" | "session";
+}) {
   const total = flow.buyNtl + flow.sellNtl;
   const buyShare = total > 0 ? (flow.buyNtl / total) * 100 : 50;
 
@@ -15,7 +21,14 @@ export function FlowPanel({ flow }: { flow: FlowStats }) {
   const deltaUp = flow.delta >= 0;
 
   return (
-    <Panel title="ORDER FLOW" right={<span className="tnum text-term-muted">CUMULATIVE</span>}>
+    <Panel
+      title="ORDER FLOW"
+      right={
+        <span className={`tnum ${scope === "all-time" ? "text-term-green" : "text-term-muted"}`}>
+          {scope === "all-time" ? "ALL-TIME" : "CUMULATIVE"}
+        </span>
+      }
+    >
       <div className="flex h-full flex-col gap-3 p-3">
         {/* buy vs sell pressure */}
         <div>
@@ -53,7 +66,7 @@ export function FlowPanel({ flow }: { flow: FlowStats }) {
           <div className="mb-1 flex items-center justify-between">
             <span className="label">PARTICIPATION</span>
             <span className="tnum text-[11px] text-term-muted">
-              session {usdSmart(part)}
+              {scope === "all-time" ? "all-time" : "session"} {usdSmart(part)}
             </span>
           </div>
           <div className="flex h-2.5 w-full overflow-hidden rounded-sm bg-bg-raised">

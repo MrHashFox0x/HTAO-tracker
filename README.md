@@ -23,21 +23,63 @@ Everything the public Hyperliquid API exposes for the pair:
   HyperCore address `0x11f9a5…dcf00`)
 - **Asset reference** — token index/id, EVM contract, decimals
 
-> Session metrics (flow, unique traders, MM share) accumulate from page load
-> using the live WS tape — Hyperliquid has no public historical-trades REST
-> endpoint, so per-trader history beyond the WS backfill isn't available.
-> 24h aggregates come from HL's asset context / candles.
+> Trader / flow metrics have two modes: **SESSION** (live WS + per-browser
+> localStorage, works with zero backend) and **ALL-TIME** (served from a
+> Postgres store fed 24/7 by the collector — see *All-time activity store*
+> below). 24h aggregates always come from HL's asset context / candles.
 
 ## Architecture
 
-- **Next.js 14 (App Router) + TypeScript + Tailwind**
-- Serverless route handlers (`/api/hl/*`) proxy Hyperliquid `/info` for the
-  overview, candles, and order book — server-side cached (1.2–5s) to stay well
-  under HL rate limits and avoid CORS.
-- The browser connects **directly** to `wss://api.hyperliquid.xyz/ws` for the
-  live `trades` + `bbo` feeds (auto-reconnect with backoff, 30s ping).
+- **Next.js 14 (App Router) + TypeScript + Tailwind** — deployed on Vercel.
+- The browser connects **directly** to `wss://api.hyperliquid.xyz/ws` for all
+  live data (price/ctx, `l2Book`, `bbo`, `trades`, `candle`) — auto-reconnect
+  with backoff, 30s ping. Only `/api/hl/candles` proxies `/info` for chart
+  history (WS streams only the forming candle).
+- **Optional all-time store** (`/collector` + Postgres + `/api/stats/*`) — see
+  below. The dashboard works with or without it; without a `DATABASE_URL` it
+  falls back to live WS + per-browser localStorage aggregation.
 
-No API keys, no env vars, no backend state. Read-only public data.
+## All-time activity store (collector → Postgres)
+
+Hyperliquid has **no historical-trades REST endpoint**, so the only way to get
+an all-time view of who traded the pair is to record every trade as it happens.
+Vercel is serverless — no always-on process — so this splits in three:
+
+1. **`/collector`** — a standalone Node process that holds the HL `trades` WS
+   open 24/7 and writes every fill into Postgres (dedup by `tid`), plus a
+   price/volume/supply snapshot each minute. **Must run on an always-on host**
+   (Railway / Fly / a VPS / a box at home) — *not* on Vercel.
+2. **Postgres** — source of truth. Universal via `DATABASE_URL` (Supabase, Neon,
+   Vercel Postgres, or self-hosted). Schema in `db/schema.sql` (the collector
+   also applies it on boot).
+3. **`/api/stats/*`** — read-routes the dashboard polls (every 10s) for all-time
+   flow, leaderboard, and tape scrollback. Set the same `DATABASE_URL` in Vercel.
+
+"All-time" means **since the collector first ran** — deploy it once and leave it
+up. The dashboard's **VIEW: ALL-TIME / SESSION** toggle switches between the DB
+view and this browser's live session.
+
+### Deploy the collector
+
+```bash
+# any always-on host — point it at your POOLED Postgres URL:
+cd collector
+cp .env.example .env        # set DATABASE_URL (Supabase :6543 / Neon -pooler)
+npm install
+npm start
+```
+
+Or Docker (build context = repo root):
+
+```bash
+docker build -f collector/Dockerfile -t htao-collector .
+docker run -d --restart=always -e DATABASE_URL=postgres://... htao-collector
+```
+
+Then add the same `DATABASE_URL` to the Vercel project's env vars and redeploy —
+the dashboard switches to all-time automatically once the table has rows.
+
+No API keys. The HL data is read-only public; only your own Postgres URL is secret.
 
 ## Run locally
 

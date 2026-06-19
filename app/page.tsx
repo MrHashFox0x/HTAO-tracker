@@ -10,11 +10,24 @@ import { FlowPanel } from "@/components/FlowPanel";
 import { TradersPanel } from "@/components/TradersPanel";
 import { TokenInfo } from "@/components/TokenInfo";
 import { useMarket, useClock } from "@/lib/useHL";
+import { useAllTime, mergeTapes } from "@/lib/useAllTime";
 
 export default function Page() {
   const [interval, setInterval] = useState("1h");
   const m = useMarket(interval);
+  const db = useAllTime();
   const now = useClock();
+
+  // Prefer the server-side all-time store when it's configured, ready, and the
+  // user hasn't flipped to the live session view. Otherwise fall back to the
+  // live WS + localStorage aggregation (works with no backend).
+  const [allTime, setAllTime] = useState(true);
+  const dbActive = db.configured && db.ready && allTime;
+
+  const flow = dbActive && db.flow ? db.flow : m.flow;
+  const traders = dbActive ? db.traders : m.traders;
+  const tape = dbActive ? mergeTapes(m.trades, db.trades) : m.trades;
+  const scope: "all-time" | "session" = dbActive ? "all-time" : "session";
 
   const [daily, setDaily] = useState<DailyDerived>({ high: null, low: null, trades: null });
   const onDaily = useCallback((d: DailyDerived) => setDaily(d), []);
@@ -38,13 +51,22 @@ export default function Page() {
       </div>
 
       <div className="mb-2 grid grid-cols-1 gap-2 lg:grid-cols-2 xl:grid-cols-3">
-        <TradeTape trades={m.trades} />
-        <FlowPanel flow={m.flow} />
+        <TradeTape trades={tape} />
+        <FlowPanel flow={flow} scope={scope} />
         <TokenInfo ov={m.overview} />
       </div>
 
       <div className="mb-2">
-        <TradersPanel traders={m.traders} flow={m.flow} now={now} onReset={m.reset} />
+        <TradersPanel
+          traders={traders}
+          flow={flow}
+          now={now}
+          scope={scope}
+          dbConfigured={db.configured && db.ready}
+          allTime={allTime}
+          onToggleScope={db.configured && db.ready ? () => setAllTime((v) => !v) : undefined}
+          onReset={dbActive ? undefined : m.reset}
+        />
       </div>
 
       <footer className="flex flex-wrap items-center justify-between gap-2 px-1 py-2 text-[10px] text-term-muted">
@@ -53,8 +75,10 @@ export default function Page() {
           WebSocket (price · book · trades · candles)
         </span>
         <span>
-          Trader / flow metrics accumulate &amp; persist locally across reloads. 24h aggregates from
-          HL.
+          {db.configured && db.ready
+            ? "Trader / flow metrics are all-time from the 24/7 collector → Postgres."
+            : "Trader / flow metrics accumulate locally across reloads (no collector configured)."}{" "}
+          24h aggregates from HL.
         </span>
         <span className="tnum">
           HTAO/USDC TERMINAL · {new Date(now).toISOString().replace("T", " ").slice(0, 19)} UTC

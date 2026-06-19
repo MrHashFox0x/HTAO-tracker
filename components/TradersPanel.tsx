@@ -29,15 +29,26 @@ export function TradersPanel({
   traders,
   flow,
   now,
+  scope = "session",
+  dbConfigured = false,
+  allTime = false,
+  onToggleScope,
   onReset,
 }: {
   traders: TraderStat[];
   flow: FlowStats;
   now: number;
+  scope?: "all-time" | "session";
+  dbConfigured?: boolean;
+  allTime?: boolean;
+  onToggleScope?: () => void;
   onReset?: () => void;
 }) {
   const maxNtl = Math.max(traders[0]?.totalNtl ?? 0, 1e-9);
   const sessionVol = flow.totalNtl || 1e-9;
+  const isAllTime = scope === "all-time";
+  const tradesLabel = isAllTime ? "TOTAL TRADES" : "SESSION TRADES";
+  const volLabel = isAllTime ? "TOTAL VOLUME" : "SESSION VOLUME";
 
   return (
     <Panel
@@ -45,9 +56,18 @@ export function TradersPanel({
       bodyClassName="flex flex-col"
       right={
         <span className="flex items-center gap-3">
-          <span className="tnum text-term-muted">
-            cumulative {flow.since ? `· ${ago(flow.since, now)}` : ""}
+          <span className={`tnum ${isAllTime ? "text-term-green" : "text-term-muted"}`}>
+            {isAllTime ? "all-time" : "session"} {flow.since ? `· since ${ago(flow.since, now)}` : ""}
           </span>
+          {dbConfigured && onToggleScope ? (
+            <button
+              onClick={onToggleScope}
+              className="border border-bg-line px-1.5 py-0.5 text-[10px] tracking-wider text-term-muted hover:border-term-green/50 hover:text-term-green"
+              title={allTime ? "Show this browser's live session" : "Show all-time (collector DB)"}
+            >
+              {allTime ? "VIEW: ALL-TIME" : "VIEW: SESSION"}
+            </button>
+          ) : null}
           {onReset ? (
             <button
               onClick={onReset}
@@ -64,8 +84,8 @@ export function TradersPanel({
         <SummaryChip label="UNIQUE TRADERS" value={num(flow.uniqueTraders, 0)} accent="text-term-green" />
         <SummaryChip label="ORGANIC" value={num(flow.uniqueOrganic, 0)} accent="text-term-green" />
         <SummaryChip label="OUR BOTS" value={num(flow.uniqueBots, 0)} accent="text-term-blue" />
-        <SummaryChip label="SESSION TRADES" value={num(flow.totalTrades, 0)} />
-        <SummaryChip label="SESSION VOLUME" value={usdSmart(flow.totalNtl)} />
+        <SummaryChip label={tradesLabel} value={num(flow.totalTrades, 0)} />
+        <SummaryChip label={volLabel} value={usdSmart(flow.totalNtl)} />
         <SummaryChip label="AVG TRADE" value={usdSmart(flow.avgTradeNtl)} />
         <SummaryChip label="HTAO TRADED" value={num(flow.totalBaseVol, 2)} />
       </div>

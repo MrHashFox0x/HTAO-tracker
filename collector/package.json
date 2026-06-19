@@ -1,0 +1,17 @@
+{
+  "name": "htao-collector",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "24/7 Hyperliquid trades collector for HTAO/USDC (@307) -> Postgres",
+  "main": "index.mjs",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.1",
+    "ws": "^8.18.0"
+  }
+}
