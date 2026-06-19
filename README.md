@@ -35,49 +35,41 @@ Everything the public Hyperliquid API exposes for the pair:
   live data (price/ctx, `l2Book`, `bbo`, `trades`, `candle`) — auto-reconnect
   with backoff, 30s ping. Only `/api/hl/candles` proxies `/info` for chart
   history (WS streams only the forming candle).
-- **Optional all-time store** (`/collector` + Postgres + `/api/stats/*`) — see
-  below. The dashboard works with or without it; without a `DATABASE_URL` it
-  falls back to live WS + per-browser localStorage aggregation.
+- **Optional all-time store** (Postgres + `/api/stats/*`) — see below. The
+  dashboard works with or without it; without a `DATABASE_URL` it falls back to
+  live WS + per-browser localStorage aggregation.
 
-## All-time activity store (collector → Postgres)
+## All-time activity store (browser-fed → Postgres)
 
-Hyperliquid has **no historical-trades REST endpoint**, so the only way to get
-an all-time view of who traded the pair is to record every trade as it happens.
-Vercel is serverless — no always-on process — so this splits in three:
+Hyperliquid has **no historical-trades REST endpoint**, so the only way to build
+an all-time view of who traded the pair is to record trades as they happen. The
+dashboard does this itself: while a tab is open, the live WS feeds every new
+trade to `POST /api/stats/ingest`, which classifies it (MM / volume bot /
+organic) and upserts it into Postgres (dedup by `tid`). The read-routes
+(`/api/stats/overview`, `/api/stats/trades`) serve the accumulated all-time
+flow, leaderboard, and tape, which the page polls every 10s.
 
-1. **`/collector`** — a standalone Node process that holds the HL `trades` WS
-   open 24/7 and writes every fill into Postgres (dedup by `tid`), plus a
-   price/volume/supply snapshot each minute. **Must run on an always-on host**
-   (Railway / Fly / a VPS / a box at home) — *not* on Vercel.
-2. **Postgres** — source of truth. Universal via `DATABASE_URL` (Supabase, Neon,
-   Vercel Postgres, or self-hosted). Schema in `db/schema.sql` (the collector
-   also applies it on boot).
-3. **`/api/stats/*`** — read-routes the dashboard polls (every 10s) for all-time
-   flow, leaderboard, and tape scrollback. Set the same `DATABASE_URL` in Vercel.
+So the store grows **whenever any tab is open** — keep one open and it's a
+recorder. The only gaps are windows where no tab is open anywhere (those trades
+can't be recovered). The ingest route creates its own table on first write, so
+setup is just: point a Postgres at it.
 
-"All-time" means **since the collector first ran** — deploy it once and leave it
-up. The dashboard's **VIEW: ALL-TIME / SESSION** toggle switches between the DB
-view and this browser's live session.
+### Setup (Supabase, ~2 min)
 
-### Deploy the collector
+1. Create a Supabase project; grab the **transaction pooler** connection string
+   (port `6543`).
+2. Add it as `DATABASE_URL` in the Vercel project env, redeploy.
 
-```bash
-# any always-on host — point it at your POOLED Postgres URL:
-cd collector
-cp .env.example .env        # set DATABASE_URL (Supabase :6543 / Neon -pooler)
-npm install
-npm start
-```
+That's it. Open the dashboard and trades start landing in `trades`; the
+TRADERS / ORDER FLOW panels flip to **ALL-TIME** (toggle to **SESSION** for this
+browser's live view). Optionally set `INGEST_TOKEN` (server) +
+`NEXT_PUBLIC_INGEST_TOKEN` (client) to gate writes — note the client token ships
+to the browser, so it's a speed bump, not real auth.
 
-Or Docker (build context = repo root):
-
-```bash
-docker build -f collector/Dockerfile -t htao-collector .
-docker run -d --restart=always -e DATABASE_URL=postgres://... htao-collector
-```
-
-Then add the same `DATABASE_URL` to the Vercel project's env vars and redeploy —
-the dashboard switches to all-time automatically once the table has rows.
+> `/collector` holds a standalone Node script that does the same ingest from an
+> always-on host (24/7, no open tab needed) if you ever want gap-free capture.
+> Not required for the browser-fed setup above. `db/schema.sql` is the canonical
+> schema for manual setup.
 
 No API keys. The HL data is read-only public; only your own Postgres URL is secret.
 

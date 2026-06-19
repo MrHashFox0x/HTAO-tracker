@@ -172,6 +172,40 @@ function topTraders(map: Map<string, TraderStat>, n: number): TraderStat[] {
   return [...map.values()].sort((a, b) => b.totalNtl - a.totalNtl).slice(0, n);
 }
 
+// Push freshly-seen trades to the server-side all-time store. Fire-and-forget:
+// the route is a no-op when no DATABASE_URL is configured, and `keepalive`
+// lets the last batch survive a tab close. Dedup by tid happens server-side.
+function postTrades(fresh: UiTrade[]) {
+  if (typeof window === "undefined" || fresh.length === 0) return;
+  const token = process.env.NEXT_PUBLIC_INGEST_TOKEN;
+  try {
+    fetch("/api/stats/ingest", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(token ? { "x-ingest-token": token } : {}),
+      },
+      keepalive: true,
+      body: JSON.stringify({
+        trades: fresh.map((t) => ({
+          tid: t.tid,
+          time: t.time,
+          side: t.side,
+          px: t.px,
+          sz: t.sz,
+          buyer: t.buyer,
+          seller: t.seller,
+          coin: PAIR_COIN,
+        })),
+      }),
+    }).catch(() => {
+      /* offline / route error — non-fatal, trade is still in localStorage */
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
 function recompute(flow: FlowStats, map: Map<string, TraderStat>) {
   flow.delta = flow.buyNtl - flow.sellNtl;
   flow.uniqueTraders = map.size;
@@ -335,6 +369,7 @@ export function useMarket(candleInterval: string) {
       );
       tradesRef.current = merged;
       persist();
+      postTrades(fresh);
 
       setState((s) => ({
         ...s,
