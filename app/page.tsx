@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { Header } from "@/components/Header";
 import { StatsBar, type DailyDerived } from "@/components/StatsBar";
 import { PriceChart } from "@/components/PriceChart";
+import { VolumeChart } from "@/components/VolumeChart";
 import { OrderBook } from "@/components/OrderBook";
 import { TradeTape } from "@/components/TradeTape";
 import { FlowPanel } from "@/components/FlowPanel";
@@ -54,6 +55,10 @@ export default function Page() {
         <TradeTape trades={tape} />
         <FlowPanel flow={flow} scope={scope} />
         <TokenInfo ov={m.overview} />
+      </div>
+
+      <div className="mb-2">
+        <VolumeChart />
       </div>
 
       <div className="mb-2">
