@@ -26,6 +26,9 @@ interface Snapshot {
 // HIP-1 system address (0x2000…) — holds the token's non-HyperCore supply.
 const SYSTEM_PREFIX = "0x200000000000000000000000000000000000";
 
+// Below this the wallet is dust, not a holder (~$3 at current prices).
+const MIN_BALANCE = 0.01;
+
 let cache: Snapshot | null = null;
 
 export async function GET() {
@@ -46,7 +49,7 @@ export async function GET() {
 
     const all = Object.entries(data.holders)
       .map(([addr, balance]) => ({ addr: addr.toLowerCase(), balance: Number(balance) }))
-      .filter((h) => isFinite(h.balance) && h.balance > 0);
+      .filter((h) => isFinite(h.balance) && h.balance >= MIN_BALANCE);
 
     const systemBalance = all
       .filter((h) => h.addr.startsWith(SYSTEM_PREFIX))
