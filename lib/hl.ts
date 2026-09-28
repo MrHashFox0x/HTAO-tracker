@@ -29,27 +29,37 @@ export const HTAO_WEI_DECIMALS = 8;
 
 /**
  * MentatMinds' Hyperliquid (HyperCore) deposit address for HTAO + USDC.
- * Any trade with this address on one side is MM (our own market-making) flow.
- * Source: mm-market-making-hl/README.md.
+ * Any trade with one of these addresses on one side is MM (our own
+ * market-making) flow. Both wallets count: v1 made the June–Sept history.
+ * Source: mm-market-making-hl/README.md "Addresses currently used".
  */
-export const MM_ADDRESS = "0x11f9a5bd171bdb5f71126d59276072f4b76dcf00";
+export const MM_ADDRESSES = [
+  "0xbbf18320cf13005771874c2af18dd9253a8ecf61", // v2 wallet (current)
+  "0x11f9a5bd171bdb5f71126d59276072f4b76dcf00", // v1 wallet (deprecated)
+] as const;
+const MM_SET = new Set<string>(MM_ADDRESSES);
 
 /** MentatMinds' volume bot address. Its flow is manufactured volume, not organic. */
 export const VOL_BOT_ADDRESS = "0x54952f67751112c880bc1369181b0cbaa00f1f81";
 
-export type TraderLabel = "MM" | "VOLBOT" | "ORGANIC";
+/** MentatMinds' TWAP execution address (inventory rebalancing). Our flow, not organic. */
+export const TWAP_ADDRESS = "0x3491b228f114fa6cadfabff27ba001ae5220255f";
+
+export type TraderLabel = "MM" | "VOLBOT" | "TWAP" | "ORGANIC";
 
 /** Friendly names for known internal addresses. */
 export const KNOWN_LABELS: Record<TraderLabel, string> = {
   MM: "Market Maker",
   VOLBOT: "Volume Bot",
+  TWAP: "MentatMinds TWAP",
   ORGANIC: "Organic",
 };
 
 export function labelFor(addr: string): TraderLabel {
   const a = addr.toLowerCase();
-  if (a === MM_ADDRESS.toLowerCase()) return "MM";
+  if (MM_SET.has(a)) return "MM";
   if (a === VOL_BOT_ADDRESS.toLowerCase()) return "VOLBOT";
+  if (a === TWAP_ADDRESS.toLowerCase()) return "TWAP";
   return "ORGANIC";
 }
 
@@ -164,6 +174,7 @@ export const CANDLE_INTERVALS = [
   { label: "1h", value: "1h", days: 7 },
   { label: "4h", value: "4h", days: 30 },
   { label: "1d", value: "1d", days: 180 },
+  { label: "1w", value: "1w", days: 365 },
 ] as const;
 
 export type IntervalValue = (typeof CANDLE_INTERVALS)[number]["value"];

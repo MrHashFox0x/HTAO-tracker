@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPool, DB_CONFIGURED } from "@/lib/db";
-import { PAIR_COIN, MM_ADDRESS, VOL_BOT_ADDRESS } from "@/lib/hl";
+import { PAIR_COIN, MM_ADDRESSES, VOL_BOT_ADDRESS, TWAP_ADDRESS } from "@/lib/hl";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,8 +20,9 @@ export const dynamic = "force-dynamic";
 
 const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
 const MAX_BATCH = 500;
-const MM = MM_ADDRESS.toLowerCase();
+const MM_SET = new Set<string>(MM_ADDRESSES);
 const VOL = VOL_BOT_ADDRESS.toLowerCase();
+const TWAP = TWAP_ADDRESS.toLowerCase();
 
 // Self-bootstrapping schema: the first ingest on a cold instance creates the
 // table if it doesn't exist, so a fresh Postgres needs zero manual setup and no
@@ -56,10 +57,11 @@ async function ensureSchema(pool: import("pg").Pool) {
   schemaReady = true;
 }
 
-function labelFor(addr: string): "MM" | "VOLBOT" | "ORGANIC" {
+function labelFor(addr: string): "MM" | "VOLBOT" | "TWAP" | "ORGANIC" {
   const a = addr.toLowerCase();
-  if (a === MM) return "MM";
+  if (MM_SET.has(a)) return "MM";
   if (a === VOL) return "VOLBOT";
+  if (a === TWAP) return "TWAP";
   return "ORGANIC";
 }
 
@@ -103,7 +105,9 @@ function validate(t: unknown): Row | null {
       ? "MM"
       : buyerLabel === "VOLBOT" || sellerLabel === "VOLBOT"
         ? "VOLBOT"
-        : "ORGANIC";
+        : buyerLabel === "TWAP" || sellerLabel === "TWAP"
+          ? "TWAP"
+          : "ORGANIC";
   return {
     tid,
     ts,

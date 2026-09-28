@@ -5,20 +5,23 @@ import { explorerUrl } from "@/lib/hl";
 import { truncAddr } from "@/lib/format";
 
 const STYLE: Record<TraderLabel, { badge: string; text: string; label: string }> = {
-  MM: { badge: "bg-term-blue/20 text-term-blue", text: "text-term-blue", label: "MM" },
+  MM: { badge: "bg-s1/10 text-s1", text: "text-s1", label: "MM" },
   VOLBOT: {
-    badge: "bg-term-violet/20 text-term-violet",
-    text: "text-term-violet",
+    badge: "bg-s5/10 text-s5",
+    text: "text-s5",
     label: "VOL",
   },
-  ORGANIC: { badge: "", text: "text-term-text", label: "" },
+  TWAP: { badge: "bg-s2/10 text-s2", text: "text-s2", label: "TWAP" },
+  ORGANIC: { badge: "", text: "text-ink", label: "" },
 };
 
 export function LabelBadge({ label }: { label: TraderLabel }) {
   if (label === "ORGANIC") return null;
   const s = STYLE[label];
   return (
-    <span className={`px-1 text-[9px] font-bold tracking-wider ${s.badge}`}>{s.label}</span>
+    <span className={`rounded px-1 py-px text-[9px] font-bold tracking-wider ${s.badge}`}>
+      {s.label}
+    </span>
   );
 }
 
@@ -33,7 +36,9 @@ export function AddrTag({
 }) {
   const s = STYLE[label];
   const body = (
-    <span className={`tnum ${s.text} ${link ? "hover:underline" : ""}`}>{truncAddr(addr)}</span>
+    <span className={`tnum font-mono ${s.text} ${link ? "hover:underline" : ""}`}>
+      {truncAddr(addr)}
+    </span>
   );
   return (
     <span className="inline-flex items-center gap-1">

@@ -13,7 +13,7 @@ function Stat({
   label,
   value,
   sub,
-  accent = "text-term-text",
+  accent = "text-ink",
 }: {
   label: string;
   value: string;
@@ -21,28 +21,26 @@ function Stat({
   accent?: string;
 }) {
   return (
-    <div className="panel flex flex-col justify-between px-3 py-2">
+    <div className="flex flex-col justify-between rounded-lg border border-edge bg-surface px-3.5 py-2.5 shadow-card">
       <span className="label">{label}</span>
-      <span className={`tnum mt-1 text-base font-semibold ${accent}`}>{value}</span>
-      {sub ? <span className="tnum text-[10px] text-term-muted">{sub}</span> : null}
+      <span className={`tnum mt-1 font-mono text-base font-semibold leading-tight ${accent}`}>
+        {value}
+      </span>
+      {sub ? <span className="tnum font-mono text-[10px] text-ink-3">{sub}</span> : null}
     </div>
   );
 }
 
 export function StatsBar({ ov, daily }: { ov: Overview | null; daily: DailyDerived }) {
   return (
-    <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+      <Stat label="24h volume (USDC)" value={usdSmart(ov?.dayNtlVlm ?? null)} accent="text-accent" />
+      <Stat label="24h volume (HTAO)" value={num(ov?.dayBaseVlm ?? null, 2)} sub="HTAO" />
+      <Stat label="24h trades" value={daily.trades != null ? num(daily.trades, 0) : "—"} />
+      <Stat label="24h high" value={price(daily.high)} accent="text-buy" />
+      <Stat label="24h low" value={price(daily.low)} accent="text-sell" />
       <Stat
-        label="24H VOLUME (USDC)"
-        value={usdSmart(ov?.dayNtlVlm ?? null)}
-        accent="text-term-green"
-      />
-      <Stat label="24H VOLUME (HTAO)" value={`${num(ov?.dayBaseVlm ?? null, 2)}`} sub="HTAO" />
-      <Stat label="24H TRADES" value={daily.trades != null ? num(daily.trades, 0) : "—"} />
-      <Stat label="24H HIGH" value={price(daily.high)} accent="text-term-green" />
-      <Stat label="24H LOW" value={price(daily.low)} accent="text-term-red" />
-      <Stat
-        label="MARKET CAP"
+        label="Market cap"
         value={usdCompact(ov?.marketCap ?? null)}
         sub={`FDV ${usdCompact(ov?.fdv ?? null)}`}
       />

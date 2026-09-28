@@ -59,6 +59,12 @@ export function pct(v: number | null | undefined, dp = 2): string {
   return `${s}${v.toFixed(dp)}%`;
 }
 
+/** Unsigned percentage — for shares/ratios, where a "+" would be noise. */
+export function share(v: number | null | undefined, dp = 2): string {
+  if (v == null || !isFinite(v)) return "—";
+  return `${v.toFixed(dp)}%`;
+}
+
 export function signed(v: number | null | undefined, dp = 2): string {
   if (v == null || !isFinite(v)) return "—";
   const s = v > 0 ? "+" : "";

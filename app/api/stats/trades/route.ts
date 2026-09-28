@@ -42,9 +42,9 @@ export async function GET(req: Request) {
       notional: Number(r.notional),
       buyer: r.buyer as string,
       seller: r.seller as string,
-      buyerLabel: r.buyer_label as "MM" | "VOLBOT" | "ORGANIC",
-      sellerLabel: r.seller_label as "MM" | "VOLBOT" | "ORGANIC",
-      bucket: r.bucket as "MM" | "VOLBOT" | "ORGANIC",
+      buyerLabel: r.buyer_label as "MM" | "VOLBOT" | "TWAP" | "ORGANIC",
+      sellerLabel: r.seller_label as "MM" | "VOLBOT" | "TWAP" | "ORGANIC",
+      bucket: r.bucket as "MM" | "VOLBOT" | "TWAP" | "ORGANIC",
     }));
 
     return NextResponse.json(

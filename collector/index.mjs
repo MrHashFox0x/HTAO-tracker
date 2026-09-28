@@ -34,20 +34,26 @@ const SNAPSHOT_EVERY_MS = Number(process.env.SNAPSHOT_EVERY_MS ?? 60_000);
 const SSL = process.env.PGSSL === "disable" ? false : { rejectUnauthorized: false };
 
 // MentatMinds internal addresses (mirror of ../lib/hl.ts — keep in sync).
-const MM_ADDRESS = "0x11f9a5bd171bdb5f71126d59276072f4b76dcf00";
+const MM_ADDRESSES = new Set([
+  "0xbbf18320cf13005771874c2af18dd9253a8ecf61", // v2 wallet (current)
+  "0x11f9a5bd171bdb5f71126d59276072f4b76dcf00", // v1 wallet (deprecated)
+]);
 const VOL_BOT_ADDRESS = "0x54952f67751112c880bc1369181b0cbaa00f1f81";
+const TWAP_ADDRESS = "0x3491b228f114fa6cadfabff27ba001ae5220255f";
 
 function labelFor(addr) {
   const a = (addr ?? "").toLowerCase();
-  if (a === MM_ADDRESS) return "MM";
+  if (MM_ADDRESSES.has(a)) return "MM";
   if (a === VOL_BOT_ADDRESS) return "VOLBOT";
+  if (a === TWAP_ADDRESS) return "TWAP";
   return "ORGANIC";
 }
 
-// Single-bucket classification, precedence MM > VOLBOT > ORGANIC.
+// Single-bucket classification, precedence MM > VOLBOT > TWAP > ORGANIC.
 function bucketFor(buyerLabel, sellerLabel) {
   if (buyerLabel === "MM" || sellerLabel === "MM") return "MM";
   if (buyerLabel === "VOLBOT" || sellerLabel === "VOLBOT") return "VOLBOT";
+  if (buyerLabel === "TWAP" || sellerLabel === "TWAP") return "TWAP";
   return "ORGANIC";
 }
 

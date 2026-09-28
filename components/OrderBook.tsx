@@ -40,39 +40,41 @@ export function OrderBook({ book }: { book: L2Book | null }) {
 
   return (
     <Panel
-      title="ORDER BOOK"
+      title="Order book"
       className="h-[520px]"
       bodyClassName="flex flex-col overflow-hidden"
       right={
         spreadBps != null ? (
-          <span className="tnum">
-            SPREAD <span className="text-term-amber">{num(spreadBps, 1)} bps</span>
+          <span className="tnum font-mono">
+            spread <span className="font-semibold text-ink">{num(spreadBps, 1)} bps</span>
           </span>
         ) : null
       }
     >
-      <div className="grid grid-cols-[1fr_1fr_auto] gap-x-2 px-3 pt-2 text-[10px] text-term-muted">
-        <span>PRICE</span>
-        <span className="text-right">SIZE (HTAO)</span>
-        <span className="text-right">CUM</span>
+      <div className="grid grid-cols-[1fr_1fr_auto] gap-x-2 px-4 pt-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-ink-3">
+        <span>Price</span>
+        <span className="text-right">Size (HTAO)</span>
+        <span className="text-right">Cum</span>
       </div>
 
       {/* asks: worst at top, best ask just above the mid */}
-      <div className="flex flex-1 flex-col justify-end px-3">
+      <div className="flex flex-1 flex-col justify-end px-4">
         {[...asks].reverse().map((r) => (
           <BookRow key={`a${r.px}`} r={r} maxCum={maxCum} side="ask" />
         ))}
       </div>
 
-      <div className="my-1 flex items-center justify-between border-y border-bg-line bg-bg-raised/60 px-3 py-1.5">
-        <span className="tnum text-sm font-bold text-term-bright">{price(mid)}</span>
-        <span className="label">MID</span>
-        <span className="tnum text-xs text-term-muted">
+      <div className="mx-4 my-1.5 flex items-center gap-3">
+        <span className="tnum font-mono text-[11px] text-ink-2 whitespace-nowrap">
+          mid <span className="text-sm font-semibold text-ink">{price(mid)}</span>
+        </span>
+        <div className="flex-1 border-t border-dashed border-edge-strong" />
+        <span className="tnum font-mono text-[11px] text-ink-3 whitespace-nowrap">
           {spread != null ? price(spread) : "—"}
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col px-3 pb-2">
+      <div className="flex flex-1 flex-col px-4 pb-2.5">
         {bids.map((r) => (
           <BookRow key={`b${r.px}`} r={r} maxCum={maxCum} side="bid" />
         ))}
@@ -85,16 +87,14 @@ function BookRow({ r, maxCum, side }: { r: Row; maxCum: number; side: "bid" | "a
   const pctw = Math.min(100, (r.cum / maxCum) * 100);
   const isBid = side === "bid";
   return (
-    <div className="relative grid grid-cols-[1fr_1fr_auto] gap-x-2 py-[1px] text-xs leading-tight">
+    <div className="relative grid grid-cols-[1fr_1fr_auto] gap-x-2 rounded-[3px] py-[1px] font-mono text-xs leading-tight">
       <div
-        className={`absolute inset-y-0 ${isBid ? "left-0 bg-term-green/10" : "left-0 bg-term-red/10"}`}
+        className={`absolute inset-y-0 left-0 rounded-[3px] ${isBid ? "bg-buy/10" : "bg-sell/10"}`}
         style={{ width: `${pctw}%` }}
       />
-      <span className={`tnum relative ${isBid ? "text-term-green" : "text-term-red"}`}>
-        {price(r.px)}
-      </span>
-      <span className="tnum relative text-right text-term-text">{num(r.sz, 2)}</span>
-      <span className="tnum relative text-right text-term-muted">{num(r.cum, 1)}</span>
+      <span className={`tnum relative ${isBid ? "text-buy" : "text-sell"}`}>{price(r.px)}</span>
+      <span className="tnum relative text-right text-ink">{num(r.sz, 2)}</span>
+      <span className="tnum relative text-right text-ink-3">{num(r.cum, 1)}</span>
     </div>
   );
 }

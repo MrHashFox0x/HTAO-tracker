@@ -37,26 +37,26 @@ export function VolumeChart() {
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#9fb3aa",
+        textColor: "#86a494",
         fontFamily: "var(--font-mono), monospace",
-        fontSize: 11,
+        fontSize: 10,
       },
       grid: {
-        vertLines: { color: "#16221d" },
-        horzLines: { color: "#16221d" },
+        vertLines: { color: "#1d3327" },
+        horzLines: { color: "#1d3327" },
       },
-      rightPriceScale: { borderColor: "#26352e" },
-      timeScale: { borderColor: "#26352e", timeVisible: false },
+      rightPriceScale: { borderColor: "#2e4d3a" },
+      timeScale: { borderColor: "#2e4d3a", timeVisible: false },
       crosshair: {
-        vertLine: { color: "#3bffa688", labelBackgroundColor: "#1aa873" },
-        horzLine: { color: "#3bffa688", labelBackgroundColor: "#1aa873" },
+        vertLine: { color: "#86a49488", labelBackgroundColor: "#446a52" },
+        horzLine: { color: "#86a49488", labelBackgroundColor: "#446a52" },
       },
       autoSize: true,
     });
     const area = chart.addAreaSeries({
-      lineColor: "#3bffa6",
-      topColor: "rgba(59,255,166,0.22)",
-      bottomColor: "rgba(59,255,166,0.02)",
+      lineColor: "#3ecf8e",
+      topColor: "rgba(62,207,142,0.14)",
+      bottomColor: "rgba(62,207,142,0.01)",
       lineWidth: 2,
       priceLineVisible: false,
     });
@@ -103,7 +103,7 @@ export function VolumeChart() {
         time: (d.t / 1000) as UTCTimestamp,
         value: mode === "ntl" ? d.ntl : d.base,
         // estimated (pre-collector) days render dimmer than exact ones
-        color: d.exact || mode === "base" ? "#3bffa655" : "#1aa87344",
+        color: d.exact || mode === "base" ? "#3ecf8e40" : "#86a49433",
       })),
     );
     chartRef.current.timeScale().fitContent();
@@ -115,13 +115,13 @@ export function VolumeChart() {
 
   return (
     <Panel
-      title="CUMULATIVE VOLUME · ALL-TIME"
+      title="Cumulative volume"
       className="h-[300px]"
       bodyClassName="flex flex-col"
       right={
         <div className="flex items-center gap-2">
           {days.length > 0 ? (
-            <span className="tnum text-term-muted">since {day(days[0].t)}</span>
+            <span className="tnum font-mono">since {day(days[0].t)}</span>
           ) : null}
           <div className="flex gap-1">
             {(
@@ -133,10 +133,10 @@ export function VolumeChart() {
               <button
                 key={m.value}
                 onClick={() => setMode(m.value)}
-                className={`px-1.5 py-0.5 text-[11px] tracking-wider transition-colors ${
+                className={`rounded-[5px] px-2.5 py-1 font-mono text-[11px] font-semibold transition-colors ${
                   mode === m.value
-                    ? "bg-term-green/15 text-term-green"
-                    : "text-term-muted hover:text-term-text"
+                    ? "bg-accent text-page"
+                    : "border border-edge bg-surface-2 text-ink-2 hover:bg-surface-3"
                 }`}
               >
                 {m.label}
@@ -146,40 +146,40 @@ export function VolumeChart() {
         </div>
       }
     >
-      <div className="relative flex-1">
+      <div className="relative m-2 flex-1 overflow-hidden rounded-md">
         <div ref={containerRef} className="absolute inset-0" />
         {shown ? (
-          <div className="pointer-events-none absolute left-2 top-1.5 z-10 flex flex-col gap-0.5 text-[10px]">
-            <span className="tnum text-term-muted">
+          <div className="pointer-events-none absolute left-2 top-1.5 z-10 flex flex-col gap-0.5 font-mono text-[10px]">
+            <span className="tnum text-ink-3">
               {day(shown.t)}
               {mode === "ntl" && !shown.exact ? (
-                <span className="text-term-dim" title="notional estimated from 1d candle vwap (pre-collector)">
+                <span className="text-ink-3" title="notional estimated from 1d candle vwap (pre-collector)">
                   {" "}
                   · est.
                 </span>
               ) : null}
             </span>
             <span className="tnum">
-              <span className="text-term-muted">DAY </span>
-              <span className="text-term-text">{fmt(mode === "ntl" ? shown.ntl : shown.base)}</span>
-              <span className="text-term-muted"> · CUM </span>
-              <span className="text-term-green">
+              <span className="text-ink-3">day </span>
+              <span className="text-ink">{fmt(mode === "ntl" ? shown.ntl : shown.base)}</span>
+              <span className="text-ink-3"> · cum </span>
+              <span className="font-semibold text-accent">
                 {fmt(mode === "ntl" ? shown.cumNtl : shown.cumBase)}
               </span>
             </span>
           </div>
         ) : null}
         {exactSince != null ? (
-          <div className="pointer-events-none absolute bottom-1 left-2 z-10 text-[9px] text-term-muted/70">
+          <div className="pointer-events-none absolute bottom-1 left-2 z-10 font-mono text-[9px] text-ink-3/80">
             exact (collector) since {day(exactSince)} · earlier days ≈ 1d-candle vwap
           </div>
         ) : null}
         {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center text-xs text-term-muted">
+          <div className="absolute inset-0 flex items-center justify-center text-xs text-ink-3">
             loading volume history…
           </div>
         ) : error ? (
-          <div className="absolute inset-0 flex items-center justify-center text-xs text-term-red/80">
+          <div className="absolute inset-0 flex items-center justify-center text-xs text-sell/80">
             volume history unavailable
           </div>
         ) : null}

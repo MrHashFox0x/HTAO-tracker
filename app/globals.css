@@ -2,76 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * HL dark green theme, pale variant. Tokens live in tailwind.config.ts;
+ * this file only sets the ground.
+ */
+
 :root {
   color-scheme: dark;
 }
 
 html,
 body {
-  background-color: #0a110e;
-  color: #e2efe9;
+  background-color: #0e1c15;
+  color: #edf6f1;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
-body {
-  /* very faint scanline + vignette — kept subtle so it never hurts legibility */
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      rgba(59, 255, 166, 0.012) 0px,
-      rgba(59, 255, 166, 0.012) 1px,
-      transparent 1px,
-      transparent 4px
-    ),
-    radial-gradient(ellipse at 50% -10%, rgba(59, 255, 166, 0.07), transparent 60%);
-  background-attachment: fixed;
+::selection {
+  background: #2a5b43;
+  color: #edf6f1;
 }
 
-/* thin terminal scrollbars */
+/* Recessive scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #446a52 transparent;
+}
 *::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  height: 8px;
+  width: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #446a52;
+  border-radius: 4px;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
-*::-webkit-scrollbar-thumb {
-  background: #16201c;
-  border-radius: 0;
-}
-*::-webkit-scrollbar-thumb:hover {
-  background: #1d2b25;
-}
 
 @layer components {
+  /* Section label — the v2 header language */
   .label {
-    @apply text-[11px] font-medium uppercase tracking-[0.16em] text-term-muted;
-  }
-  .panel {
-    @apply relative border border-bg-line bg-bg-panel/95;
+    @apply text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-3;
   }
   .tnum {
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
-  }
-  .corner::before,
-  .corner::after {
-    content: "";
-    position: absolute;
-    width: 7px;
-    height: 8px;
-    border-color: #3bffa6aa;
-  }
-  .corner::before {
-    top: -1px;
-    left: -1px;
-    border-top: 1px solid;
-    border-left: 1px solid;
-  }
-  .corner::after {
-    bottom: -1px;
-    right: -1px;
-    border-bottom: 1px solid;
-    border-right: 1px solid;
   }
 }

@@ -3,69 +3,58 @@
 import { PAIR_NAME } from "@/lib/hl";
 import type { Overview } from "@/lib/hl";
 import type { WsStatus } from "@/lib/useHL";
-import { price, pct, signed, utcClock } from "@/lib/format";
+import { price, pct, signed } from "@/lib/format";
 
-const STATUS_MAP: Record<WsStatus, { txt: string; cls: string; dot: string }> = {
-  live: { txt: "LIVE", cls: "text-term-green", dot: "bg-term-green animate-blink" },
-  connecting: { txt: "CONNECTING", cls: "text-term-amber", dot: "bg-term-amber animate-blink" },
-  reconnecting: { txt: "RECONNECTING", cls: "text-term-amber", dot: "bg-term-amber animate-blink" },
-  down: { txt: "OFFLINE", cls: "text-term-red", dot: "bg-term-red" },
+/** Shown only when the feed is degraded — silence means live.  */
+const DEGRADED: Partial<Record<WsStatus, { txt: string; cls: string; dot: string }>> = {
+  connecting: { txt: "CONNECTING", cls: "text-warn", dot: "bg-warn animate-blink" },
+  reconnecting: { txt: "RECONNECTING", cls: "text-warn", dot: "bg-warn animate-blink" },
+  down: { txt: "OFFLINE", cls: "text-sell", dot: "bg-sell" },
 };
 
-export function Header({
-  ov,
-  status,
-  now,
-}: {
-  ov: Overview | null;
-  status: WsStatus;
-  now: number;
-}) {
+/** Sticky header over the dark green body. */
+export function Header({ ov, status }: { ov: Overview | null; status: WsStatus }) {
   const ref = ov?.mid ?? ov?.mark ?? null;
   const up = (ov?.changePct24h ?? 0) >= 0;
-  const st = STATUS_MAP[status];
+  const st = DEGRADED[status];
 
   return (
-    <header className="panel corner mb-2 flex flex-wrap items-center gap-x-8 gap-y-3 px-4 py-3">
-      <div className="flex items-baseline gap-3">
-        <span className="text-lg font-bold tracking-widest text-term-bright drop-shadow-[0_0_8px_rgba(34,229,143,0.5)]">
-          {PAIR_NAME}
-        </span>
-        <span className="label">HYPERLIQUID · SPOT · @307</span>
-      </div>
+    <header className="sticky top-0 z-20 border-b border-edge bg-surface/90 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4">
+        {/* Identity */}
+        <div className="flex min-w-0 items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hyperliquid.png"
+            alt="Hyperliquid"
+            className="h-9 w-9 shrink-0 rounded-lg shadow-sm"
+          />
+          <div className="min-w-0 leading-tight">
+            <h1 className="truncate text-[15px] font-semibold text-ink">
+              Dashboard MentatMinds <span className="text-accent">{PAIR_NAME}</span>
+            </h1>
+          </div>
+        </div>
 
-      <div className="flex items-end gap-3">
-        <span
-          className={`tnum text-3xl font-bold leading-none ${up ? "text-term-green" : "text-term-red"}`}
-        >
-          {price(ref)}
-        </span>
-        <div className="flex flex-col leading-tight">
-          <span className={`tnum text-sm ${up ? "text-term-green" : "text-term-red"}`}>
+        {/* Hero price + 24h change */}
+        <div className="ml-auto flex items-baseline gap-3">
+          <span
+            className={`tnum font-mono text-2xl font-semibold leading-none ${up ? "text-buy" : "text-sell"}`}
+          >
+            {price(ref)}
+          </span>
+          <span className={`tnum font-mono text-xs font-medium ${up ? "text-buy" : "text-sell"}`}>
             {signed(ov?.change24h ?? null)} ({pct(ov?.changePct24h ?? null)})
           </span>
-          <span className="label">24H</span>
         </div>
-      </div>
 
-      <div className="ml-auto flex items-center gap-6">
-        <Field label="MARK" value={price(ov?.mark ?? null)} />
-        <Field label="PREV CLOSE" value={price(ov?.prevDayPx ?? null)} />
-        <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${st.dot}`} />
-          <span className={`text-xs font-bold tracking-widest ${st.cls}`}>{st.txt}</span>
-        </div>
-        <span className="tnum hidden text-xs text-term-muted md:inline">{utcClock(now)}</span>
+        {st ? (
+          <span className="flex shrink-0 items-center gap-1.5 text-[11px] font-medium">
+            <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
+            <span className={st.cls}>{st.txt}</span>
+          </span>
+        ) : null}
       </div>
     </header>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="hidden flex-col items-end leading-tight sm:flex">
-      <span className="tnum text-sm text-term-text">{value}</span>
-      <span className="label">{label}</span>
-    </div>
   );
 }

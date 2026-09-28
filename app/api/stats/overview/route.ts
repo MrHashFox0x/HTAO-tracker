@@ -19,6 +19,7 @@ const SUMMARY_SQL = `
     COUNT(*) FILTER (WHERE side = 'A')                          AS sell_trades,
     COALESCE(SUM(notional) FILTER (WHERE bucket = 'MM'), 0)     AS mm_ntl,
     COALESCE(SUM(notional) FILTER (WHERE bucket = 'VOLBOT'), 0) AS volbot_ntl,
+    COALESCE(SUM(notional) FILTER (WHERE bucket = 'TWAP'), 0)   AS twap_ntl,
     COALESCE(SUM(notional) FILTER (WHERE bucket = 'ORGANIC'), 0)AS organic_ntl,
     MIN(ts)                                                     AS since
   FROM trades
@@ -92,6 +93,7 @@ export async function GET(req: Request) {
       delta: buyNtl - sellNtl,
       mmNtl: num(s.mm_ntl),
       volBotNtl: num(s.volbot_ntl),
+      twapNtl: num(s.twap_ntl),
       organicNtl: num(s.organic_ntl),
       totalNtl,
       totalBaseVol: num(s.total_base),
@@ -108,7 +110,7 @@ export async function GET(req: Request) {
       const sell = num(r.sell_ntl);
       return {
         addr: r.addr as string,
-        label: r.label as "MM" | "VOLBOT" | "ORGANIC",
+        label: r.label as "MM" | "VOLBOT" | "TWAP" | "ORGANIC",
         buyNtl: buy,
         sellNtl: sell,
         totalNtl: num(r.total_ntl),

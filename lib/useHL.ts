@@ -63,6 +63,7 @@ export interface FlowStats {
   delta: number;
   mmNtl: number;
   volBotNtl: number;
+  twapNtl: number;
   organicNtl: number;
   totalNtl: number;
   totalBaseVol: number;
@@ -100,6 +101,7 @@ const emptyFlow = (): FlowStats => ({
   delta: 0,
   mmNtl: 0,
   volBotNtl: 0,
+  twapNtl: 0,
   organicNtl: 0,
   totalNtl: 0,
   totalBaseVol: 0,
@@ -150,7 +152,9 @@ function classify(t: Trade): UiTrade {
       ? "MM"
       : buyerLabel === "VOLBOT" || sellerLabel === "VOLBOT"
         ? "VOLBOT"
-        : "ORGANIC";
+        : buyerLabel === "TWAP" || sellerLabel === "TWAP"
+          ? "TWAP"
+          : "ORGANIC";
   const px = Number(t.px);
   const sz = Number(t.sz);
   return {
@@ -321,6 +325,7 @@ export function useMarket(candleInterval: string) {
         }
         if (ui.bucket === "MM") f.mmNtl += ui.notional;
         else if (ui.bucket === "VOLBOT") f.volBotNtl += ui.notional;
+        else if (ui.bucket === "TWAP") f.twapNtl += ui.notional;
         else f.organicNtl += ui.notional;
 
         for (const addr of [ui.buyer, ui.seller]) {

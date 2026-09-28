@@ -49,27 +49,27 @@ export function PriceChart({
     const chart = createChart(containerRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#9fb3aa",
+        textColor: "#86a494",
         fontFamily: "var(--font-mono), monospace",
-        fontSize: 11,
+        fontSize: 10,
       },
       grid: {
-        vertLines: { color: "#16221d" },
-        horzLines: { color: "#16221d" },
+        vertLines: { color: "#1d3327" },
+        horzLines: { color: "#1d3327" },
       },
-      rightPriceScale: { borderColor: "#26352e" },
-      timeScale: { borderColor: "#26352e", timeVisible: true, secondsVisible: false },
+      rightPriceScale: { borderColor: "#2e4d3a" },
+      timeScale: { borderColor: "#2e4d3a", timeVisible: true, secondsVisible: false },
       crosshair: {
-        vertLine: { color: "#3bffa688", labelBackgroundColor: "#1aa873" },
-        horzLine: { color: "#3bffa688", labelBackgroundColor: "#1aa873" },
+        vertLine: { color: "#86a49488", labelBackgroundColor: "#446a52" },
+        horzLine: { color: "#86a49488", labelBackgroundColor: "#446a52" },
       },
       autoSize: true,
     });
     const candle = chart.addCandlestickSeries({
-      upColor: "#3bffa6",
-      downColor: "#ff6172",
-      wickUpColor: "#3bffa6",
-      wickDownColor: "#ff6172",
+      upColor: "#3ecf8e",
+      downColor: "#e66767",
+      wickUpColor: "#3ecf8e",
+      wickDownColor: "#e66767",
       borderVisible: false,
     });
     const vol = chart.addHistogramSeries({
@@ -109,7 +109,7 @@ export function PriceChart({
           sorted.map((c) => ({
             time: (c.t / 1000) as UTCTimestamp,
             value: +c.v,
-            color: +c.c >= +c.o ? "#3bffa655" : "#ff617255",
+            color: +c.c >= +c.o ? "#3ecf8e40" : "#e6676740",
           })),
         );
         chartRef.current?.timeScale().fitContent();
@@ -138,26 +138,26 @@ export function PriceChart({
     volRef.current.update({
       time,
       value: +liveCandle.v,
-      color: +liveCandle.c >= +liveCandle.o ? "#3bffa655" : "#ff617255",
+      color: +liveCandle.c >= +liveCandle.o ? "#3ecf8e40" : "#e6676740",
     });
     onDaily?.(deriveDaily([...dataRef.current.values()].sort((a, b) => a.t - b.t)));
   }, [liveCandle, interval, onDaily]);
 
   return (
     <Panel
-      title="PRICE / VOLUME"
+      title="Price / Volume"
       className="h-[520px]"
       bodyClassName="flex flex-col"
       right={
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
           {CANDLE_INTERVALS.map((iv) => (
             <button
               key={iv.value}
               onClick={() => onIntervalChange(iv.value)}
-              className={`px-1.5 py-0.5 text-[11px] tracking-wider transition-colors ${
+              className={`rounded-[5px] px-2.5 py-1 font-mono text-[11px] font-semibold transition-colors ${
                 interval === iv.value
-                  ? "bg-term-green/15 text-term-green"
-                  : "text-term-muted hover:text-term-text"
+                  ? "bg-accent text-page"
+                  : "border border-edge bg-surface-2 text-ink-2 hover:bg-surface-3"
               }`}
             >
               {iv.label}
@@ -166,10 +166,10 @@ export function PriceChart({
         </div>
       }
     >
-      <div className="relative flex-1">
+      <div className="relative m-2 flex-1 overflow-hidden rounded-md">
         <div ref={containerRef} className="absolute inset-0" />
         {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center text-xs text-term-muted">
+          <div className="absolute inset-0 flex items-center justify-center text-xs text-ink-3">
             loading candles…
           </div>
         ) : null}
